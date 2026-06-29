@@ -1,0 +1,3543 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Topup Center</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+        /* ===== SEMUA STYLE SAMA SEPERTI SEBELUMNYA ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --primary-light: #8B83FF;
+            --primary-dark: #5A52D5;
+            --secondary: #FF6584;
+            --accent: #00D2FF;
+            --gold: #FFD700;
+            --gradient-1: linear-gradient(135deg, #6C63FF 0%, #00D2FF 100%);
+            --gradient-2: linear-gradient(135deg, #FF6584 0%, #FF9A76 100%);
+            --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            
+            --bg-primary: #0A0A1A;
+            --bg-secondary: #12122A;
+            --bg-card: #1A1A3E;
+            --bg-card-hover: #222255;
+            --bg-input: #0F0F2A;
+            
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0D0;
+            --text-muted: #6B6B8A;
+            
+            --border-color: rgba(108, 99, 255, 0.15);
+            --shadow-glow: 0 0 40px rgba(108, 99, 255, 0.15);
+            --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.4);
+            
+            --radius-sm: 12px;
+            --radius-md: 20px;
+            --radius-lg: 30px;
+            --radius-xl: 40px;
+            
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #F0F2F5;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-card-hover: #F8F9FA;
+            --bg-input: #F0F2F5;
+            --text-primary: #1A1A2E;
+            --text-secondary: #4A4A6A;
+            --text-muted: #8A8AAA;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: var(--transition);
+            overflow-x: hidden;
+        }
+
+        .bg-animation {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .bg-animation .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.1;
+            animation: floatOrb 20s infinite ease-in-out;
+        }
+        .bg-animation .orb:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--primary);
+            top: -10%;
+            left: -5%;
+            animation-delay: 0s;
+        }
+        .bg-animation .orb:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: var(--secondary);
+            bottom: -10%;
+            right: -5%;
+            animation-delay: -5s;
+        }
+        .bg-animation .orb:nth-child(3) {
+            width: 300px;
+            height: 300px;
+            background: var(--accent);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -10s;
+        }
+
+        @keyframes floatOrb {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(50px, -50px) scale(1.1); }
+            50% { transform: translate(-30px, 30px) scale(0.9); }
+            75% { transform: translate(40px, 20px) scale(1.05); }
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.5s ease;
+            box-shadow: var(--shadow-card);
+        }
+        .toast.removing { animation: slideOutRight 0.5s ease forwards; }
+        .toast .toast-icon { font-size: 24px; flex-shrink: 0; }
+        .toast .toast-icon.success { color: #00D2FF; }
+        .toast .toast-icon.error { color: #FF6584; }
+        .toast .toast-icon.warning { color: #FFD93D; }
+        .toast .toast-icon.info { color: var(--primary); }
+        .toast .toast-content { flex: 1; }
+        .toast .toast-content .toast-title { font-weight: 700; font-size: 0.95rem; }
+        .toast .toast-content .toast-message { font-size: 0.85rem; color: var(--text-secondary); }
+        .toast .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+        .toast .toast-close:hover { color: var(--text-primary); }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100px); }
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-light); }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 10px 32px;
+            background: rgba(10, 10, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition);
+        }
+        [data-theme="light"] .navbar { background: rgba(255, 255, 255, 0.85); }
+        .navbar.scrolled {
+            padding: 6px 32px;
+            background: rgba(10, 10, 26, 0.95);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 22px;
+            font-weight: 900;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+        }
+        .logo i { font-size: 28px; -webkit-text-fill-color: var(--primary); }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-actions button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 8px;
+            border-radius: 50%;
+            position: relative;
+        }
+        .nav-actions button:hover { color: var(--text-primary); background: var(--bg-card-hover); }
+        .nav-actions .badge-count {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--secondary);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .theme-toggle { font-size: 20px !important; }
+
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px 4px 4px !important;
+            border-radius: var(--radius-xl) !important;
+            background: var(--bg-card-hover) !important;
+        }
+        .profile-btn:hover { background: var(--bg-card-hover) !important; }
+        .profile-btn .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #fff;
+            overflow: hidden;
+        }
+        .profile-btn .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-btn .username {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .premium-badge-nav {
+            background: var(--gradient-gold);
+            color: #000;
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: var(--radius-xl);
+            margin-left: 4px;
+        }
+
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 120px 40px 40px;
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(108, 99, 255, 0.15);
+            border: 1px solid var(--border-color);
+            padding: 8px 24px;
+            border-radius: var(--radius-xl);
+            font-size: 0.85rem;
+            color: var(--primary-light);
+            margin-bottom: 20px;
+            animation: fadeInDown 0.8s ease;
+        }
+        .hero h1 {
+            font-size: 3.8rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease;
+        }
+        .hero h1 .highlight { background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; }
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 30px;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            animation: fadeInUp 0.8s ease 0.4s both;
+        }
+        .hero-stats .stat { text-align: center; }
+        .hero-stats .stat .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-stats .stat .label { font-size: 0.85rem; color: var(--text-muted); }
+
+        .search-section {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            padding: 0 20px;
+            animation: fadeInUp 0.8s ease 0.6s both;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 4px 4px 4px 24px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-glow);
+        }
+        .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 40px rgba(108, 99, 255, 0.2);
+            transform: scale(1.01);
+        }
+        .search-box i { color: var(--text-muted); }
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 14px 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+        }
+        .search-box input::placeholder { color: var(--text-muted); }
+        .search-box .btn-search {
+            background: var(--gradient-1);
+            border: none;
+            padding: 12px 28px;
+            border-radius: var(--radius-xl);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+        }
+        .search-box .btn-search:hover { transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.4); }
+
+        .filter-section {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            padding: 0 20px;
+            animation: fadeInUp 0.8s ease 0.8s both;
+        }
+        .filter-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 8px 20px;
+            border-radius: var(--radius-xl);
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-btn:hover { background: var(--bg-card-hover);
+            color: var(--text-primary);
+            transform: translateY(-2px); }
+        .filter-btn.active {
+            background: var(--gradient-1);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.3);
+        }
+
+        .product-grid {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 24px;
+            padding: 0 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px 18px 20px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease both;
+        }
+        .product-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-1);
+            opacity: 0;
+            transition: var(--transition);
+            border-radius: var(--radius-md);
+        }
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 20px 60px rgba(108, 99, 255, 0.2);
+        }
+        .product-card:hover::before { opacity: 0.05; }
+        .product-card > * { position: relative; z-index: 1; }
+
+        .product-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            transition: var(--transition);
+            background: rgba(108, 99, 255, 0.1);
+        }
+        .product-card:hover .product-icon { transform: scale(1.1) rotate(-5deg); }
+        .product-icon img { width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%; }
+
+        .product-card .badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 12px;
+            border-radius: var(--radius-xl);
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            z-index: 2;
+        }
+        .badge.popular { background: var(--gradient-2);
+            color: #fff; }
+        .badge.new { background: var(--gradient-2);
+            color: #fff; }
+        .badge.sale { background: var(--gradient-gold);
+            color: #000; }
+        .badge.premium { background: var(--gradient-gold);
+            color: #000; }
+
+        .product-card .wishlist-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 2;
+        }
+        .product-card .wishlist-btn:hover { color: var(--secondary);
+            transform: scale(1.2); }
+        .product-card .wishlist-btn.active { color: var(--secondary); }
+
+        .product-card h3 { font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 2px; }
+        .product-card .price {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 6px 0;
+        }
+        .product-card .original-price {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            margin-left: 6px;
+            -webkit-text-fill-color: var(--text-muted);
+        }
+        .product-card .rating {
+            color: #FFD93D;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+        .product-card .rating span { color: var(--text-secondary);
+            margin-left: 4px; }
+        .product-card .category-tag {
+            display: inline-block;
+            background: rgba(108, 99, 255, 0.1);
+            padding: 3px 14px;
+            border-radius: var(--radius-xl);
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .product-card .btn-order {
+            width: 100%;
+            padding: 10px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: var(--radius-xl);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .product-card .btn-order:hover { transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.4); }
+        .product-card .btn-order:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .features {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .feature-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px 20px;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .feature-item:hover { transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-glow); }
+        .feature-item i {
+            font-size: 32px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .feature-item h4 { font-size: 0.95rem;
+            margin-bottom: 4px; }
+        .feature-item p { font-size: 0.8rem;
+            color: var(--text-muted); }
+
+        .footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .footer .social { display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 12px; }
+        .footer .social a { color: var(--text-muted);
+            font-size: 1.2rem;
+            transition: var(--transition); }
+        .footer .social a:hover { color: var(--primary-light);
+            transform: translateY(-3px); }
+        .footer i.fa-heart { color: var(--secondary); }
+
+        /* ===== TOPUP FULLSCREEN ===== */
+        .topup-fullscreen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            animation: fadeIn 0.4s ease;
+            overflow-y: auto;
+        }
+        .topup-fullscreen.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .topup-header {
+            padding: 16px 32px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(20px);
+        }
+        .topup-header .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        .topup-header .back-btn:hover { color: var(--text-primary); }
+        .topup-header .topup-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .topup-body {
+            flex: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+            width: 100%;
+        }
+
+        .topup-product-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 20px 24px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+        .topup-product-info .tpi-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+        .topup-product-info .tpi-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .topup-product-info .tpi-text h2 { font-size: 1.3rem; }
+        .topup-product-info .tpi-text .tpi-price {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .topup-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 20px 24px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+        .topup-section .section-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .topup-id-input {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .topup-id-input input {
+            flex: 1;
+            padding: 12px 18px;
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: var(--transition);
+            min-width: 200px;
+        }
+        .topup-id-input input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 20px rgba(108, 99, 255, 0.1);
+        }
+        .topup-id-input input::placeholder { color: var(--text-muted); }
+
+        .topup-packages {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        .topup-package {
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 12px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        .topup-package:hover {
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+        .topup-package.active {
+            border-color: var(--primary);
+            background: rgba(108, 99, 255, 0.1);
+            box-shadow: 0 0 20px rgba(108, 99, 255, 0.1);
+        }
+        .topup-package .pkg-price {
+            font-weight: 700;
+            font-size: 0.95rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .topup-package .pkg-label { font-size: 0.7rem;
+            color: var(--text-secondary); }
+        .topup-package .pkg-badge {
+            display: inline-block;
+            font-size: 0.5rem;
+            padding: 2px 8px;
+            border-radius: var(--radius-xl);
+            margin-top: 3px;
+        }
+        .pkg-badge.best { background: var(--gradient-1);
+            color: #fff; }
+        .pkg-badge.populer { background: var(--gradient-2);
+            color: #fff; }
+        .pkg-badge.hemat { background: var(--gradient-gold);
+            color: #000; }
+
+        .topup-payments {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 8px;
+        }
+        .topup-payment {
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .topup-payment:hover {
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+        .topup-payment.active {
+            border-color: var(--primary);
+            background: rgba(108, 99, 255, 0.1);
+        }
+        .topup-payment i { font-size: 22px;
+            display: block;
+            margin-bottom: 3px; }
+        .topup-payment .pm-name { font-size: 0.65rem;
+            font-weight: 600; }
+        .topup-payment img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 3px;
+            border-radius: 4px;
+        }
+
+        .topup-summary {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 20px 24px;
+            border: 1px solid var(--border-color);
+            margin-top: 16px;
+        }
+        .topup-summary .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 0.9rem;
+        }
+        .topup-summary .summary-row.total {
+            border-top: 2px solid var(--border-color);
+            padding-top: 10px;
+            margin-top: 4px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .topup-summary .summary-row.total .total-price {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .topup-actions {
+            display: flex;
+            gap: 14px;
+            margin-top: 20px;
+        }
+        .topup-actions button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .topup-actions .btn-cancel-topup {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .topup-actions .btn-cancel-topup:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+        .topup-actions .btn-pay-topup {
+            background: var(--gradient-1);
+            color: #fff;
+            flex: 2;
+        }
+        .topup-actions .btn-pay-topup:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.4);
+        }
+        .topup-actions .btn-pay-topup:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== SUCCESS FULLSCREEN ===== */
+        .success-fullscreen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 99998;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease;
+            padding: 40px 20px;
+        }
+        .success-fullscreen.active { display: flex; }
+
+        .success-content {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: successAnim 0.8s ease;
+        }
+
+        @keyframes successAnim {
+            0% { opacity: 0; transform: scale(0.8) translateY(30px); }
+            50% { transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .success-content .success-icon {
+            font-size: 80px;
+            color: #00D2FF;
+            margin-bottom: 16px;
+            animation: successPulse 1.5s ease infinite;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .success-content .success-title {
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .success-content .success-sub {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 24px;
+        }
+        .success-content .success-details {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: left;
+            margin-bottom: 24px;
+        }
+        .success-content .success-details .sd-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.9rem;
+        }
+        .success-content .success-details .sd-row.total {
+            border-top: 2px solid var(--border-color);
+            padding-top: 10px;
+            margin-top: 4px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .success-content .success-details .sd-row.total .sd-total {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .success-content .success-details .sd-status {
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: var(--radius-xl);
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: rgba(0, 210, 255, 0.15);
+            color: #00D2FF;
+        }
+
+        .success-content .btn-success-close {
+            padding: 14px 48px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: var(--radius-xl);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+        }
+        .success-content .btn-success-close:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        /* ===== AUTH MODAL ===== */
+        .auth-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            z-index: 99998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-modal.active { display: flex; }
+
+        .auth-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            max-width: 440px;
+            width: 100%;
+            padding: 32px 28px;
+            animation: modalIn 0.4s ease;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+            position: relative;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .auth-box .auth-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .auth-box .auth-close:hover { color: var(--text-primary); }
+
+        .auth-box .auth-header { text-align: center;
+            margin-bottom: 24px; }
+        .auth-box .auth-header .auth-icon {
+            font-size: 48px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .auth-box .auth-header h2 { font-size: 1.5rem; }
+        .auth-box .auth-header p { color: var(--text-secondary);
+            font-size: 0.9rem; }
+
+        .auth-box .auth-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: var(--bg-input);
+            border-radius: var(--radius-xl);
+            padding: 4px;
+        }
+        .auth-box .auth-tabs button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: var(--radius-xl);
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+        }
+        .auth-box .auth-tabs button.active {
+            background: var(--gradient-1);
+            color: #fff;
+        }
+        .auth-box .auth-tabs button:hover:not(.active) { color: var(--text-primary); }
+
+        .auth-box .auth-form { display: none; }
+        .auth-box .auth-form.active { display: block; }
+
+        .auth-box .auth-form label {
+            font-weight: 600;
+            display: block;
+            margin: 12px 0 4px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .auth-box .auth-form input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: var(--transition);
+        }
+        .auth-box .auth-form input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 20px rgba(108, 99, 255, 0.1);
+        }
+
+        .auth-box .auth-form .btn-auth {
+            width: 100%;
+            padding: 14px;
+            margin-top: 16px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: var(--radius-xl);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+        }
+        .auth-box .auth-form .btn-auth:hover { transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.4); }
+
+        /* ===== PROFILE MODAL ===== */
+        .profile-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            z-index: 99998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .profile-modal.active { display: flex; }
+
+        .profile-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            max-width: 460px;
+            width: 100%;
+            padding: 32px 28px;
+            animation: modalIn 0.4s ease;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .profile-box .profile-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .profile-box .profile-close:hover { color: var(--text-primary); }
+
+        .profile-box .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: #fff;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+            border: 3px solid var(--border-color);
+        }
+        .profile-box .profile-avatar:hover { border-color: var(--primary); }
+        .profile-box .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-box .profile-avatar .avatar-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+            border-radius: 50%;
+        }
+        .profile-box .profile-avatar:hover .avatar-overlay { opacity: 1; }
+        .profile-box .profile-avatar .avatar-overlay i {
+            color: #fff;
+            font-size: 28px;
+        }
+        .profile-box .profile-avatar input[type="file"] { display: none; }
+
+        .profile-box .profile-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        .profile-box .profile-email {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .profile-box .profile-phone {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .profile-box .profile-premium {
+            text-align: center;
+            margin: 8px 0 12px;
+            padding: 8px 16px;
+            border-radius: var(--radius-xl);
+            display: inline-block;
+            width: 100%;
+        }
+        .profile-box .profile-premium .premium-badge {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .profile-box .profile-premium.free {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--text-secondary);
+        }
+        .profile-box .profile-premium.premium {
+            background: var(--gradient-gold);
+            color: #000;
+        }
+
+        .profile-box .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 12px 0;
+            padding: 12px 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .profile-box .profile-stats .pstat { text-align: center; }
+        .profile-box .profile-stats .pstat .pnum {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .profile-box .profile-stats .pstat .plabel {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .profile-box .edit-toggle {
+            text-align: center;
+            margin: 8px 0;
+        }
+        .profile-box .edit-toggle button {
+            background: none;
+            border: none;
+            color: var(--primary-light);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+        }
+        .profile-box .edit-toggle button:hover { color: var(--primary); }
+
+        .profile-box .edit-fields {
+            display: none;
+            margin-top: 12px;
+        }
+        .profile-box .edit-fields.active { display: block; }
+        .profile-box .edit-fields label {
+            font-weight: 600;
+            display: block;
+            margin: 8px 0 4px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .profile-box .edit-fields input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+        }
+        .profile-box .edit-fields input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        .profile-box .edit-fields .btn-save-profile {
+            width: 100%;
+            padding: 10px;
+            margin-top: 12px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: var(--radius-xl);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+        }
+        .profile-box .edit-fields .btn-save-profile:hover { transform: scale(1.02); }
+
+        .profile-box .btn-upgrade-premium {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            background: var(--gradient-gold);
+            border: none;
+            border-radius: var(--radius-xl);
+            color: #000;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+        }
+        .profile-box .btn-upgrade-premium:hover { transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4); }
+        .profile-box .btn-upgrade-premium:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .profile-box .btn-logout {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            color: var(--text-secondary);
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+        }
+        .profile-box .btn-logout:hover {
+            background: var(--secondary);
+            color: #fff;
+            border-color: var(--secondary);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 8px 16px; }
+            .hero { padding: 100px 16px 30px; }
+            .hero h1 { font-size: 2rem; }
+            .hero-stats { gap: 24px;
+                flex-wrap: wrap; }
+            .product-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 14px;
+                padding: 0 12px; }
+            .topup-header { padding: 12px 16px; }
+            .topup-body { padding: 12px; }
+            .topup-product-info { flex-direction: column;
+                text-align: center; }
+            .topup-packages { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+            .topup-payments { grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); }
+            .topup-actions { flex-direction: column; }
+            .topup-id-input { flex-direction: column; }
+            .auth-box { padding: 24px 16px; }
+            .profile-box { padding: 24px 16px; }
+            .profile-box .profile-stats { gap: 20px; }
+            .profile-btn .username { display: none; }
+            .nav-actions { gap: 6px; }
+            .nav-actions button { padding: 6px;
+                font-size: 16px; }
+            .success-content .success-title { font-size: 1.6rem; }
+            .success-content .success-icon { font-size: 60px; }
+        }
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 1.6rem; }
+            .product-grid { grid-template-columns: 1fr 1fr;
+                gap: 10px; }
+            .product-card { padding: 14px 10px; }
+            .product-icon { width: 50px;
+                height: 50px;
+                font-size: 20px; }
+            .filter-btn { padding: 5px 12px;
+                font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-animation">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== NAVBAR ===== -->
+    <nav class="navbar" id="navbar">
+        <div class="logo" onclick="location.reload()">
+            <i class="fas fa-crown"></i>
+            <span>TopUp<span style="-webkit-text-fill-color: var(--primary);">Pro</span></span>
+        </div>
+        <div class="nav-actions">
+            <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
+            <button id="wishlistBtn"><i class="fas fa-heart"></i><span class="badge-count" id="wishlistCount">0</span></button>
+            <button id="cartBtn"><i class="fas fa-shopping-cart"></i><span class="badge-count" id="cartCount">0</span></button>
+            <button id="profileBtn" class="profile-btn" style="display:none;">
+                <div class="avatar" id="navAvatar"><i class="fas fa-user"></i></div>
+                <span class="username" id="navUsername">User</span>
+                <span class="premium-badge-nav" id="navPremiumBadge" style="display:none;">⭐ PREMIUM</span>
+            </button>
+            <button id="loginBtn" class="btn-primary" style="background:var(--gradient-1);color:#fff;padding:8px 20px;border-radius:var(--radius-xl);font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+        </div>
+    </nav>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+        <div class="hero-badge"><i class="fas fa-bolt"></i> 40+ Produk • 300+ Pilihan Paket • Premium Member</div>
+        <h1>Topup Game & <br/><span class="highlight">Aplikasi Digital</span></h1>
+        <p>Isi saldo game favoritmu, paket data, dan voucher digital dengan harga terbaik & proses kilat.</p>
+        <div class="hero-stats">
+            <div class="stat"><div class="number">100K+</div><div class="label">Transaksi Sukses</div></div>
+            <div class="stat"><div class="number">40+</div><div class="label">Produk Tersedia</div></div>
+            <div class="stat"><div class="number">4.9</div><div class="label">Rating Pengguna</div></div>
+        </div>
+    </section>
+
+    <!-- ===== SEARCH ===== -->
+    <div class="search-section">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Cari game, aplikasi, atau voucher..." />
+            <button class="btn-search" id="searchBtn"><i class="fas fa-arrow-right"></i> Cari</button>
+        </div>
+    </div>
+
+    <!-- ===== FILTER ===== -->
+    <div class="filter-section" id="filterContainer">
+        <button class="filter-btn active" data-filter="all"><i class="fas fa-th"></i> Semua</button>
+        <button class="filter-btn" data-filter="game"><i class="fas fa-gamepad"></i> Game</button>
+        <button class="filter-btn" data-filter="app"><i class="fas fa-mobile-alt"></i> Aplikasi</button>
+        <button class="filter-btn" data-filter="voucher"><i class="fas fa-ticket-alt"></i> Voucher</button>
+        <button class="filter-btn" data-filter="popular"><i class="fas fa-fire"></i> Populer</button>
+        <button class="filter-btn" data-filter="sale"><i class="fas fa-tags"></i> Diskon</button>
+    </div>
+
+    <!-- ===== PRODUCT GRID ===== -->
+    <div class="product-grid" id="productGrid"></div>
+
+    <!-- ===== FEATURES ===== -->
+    <div class="features">
+        <div class="feature-item"><i class="fas fa-bolt"></i><h4>Proses Instan</h4><p>Topup langsung masuk dalam hitungan detik</p></div>
+        <div class="feature-item"><i class="fas fa-shield-alt"></i><h4>Aman & Terpercaya</h4><p>Sistem keamanan berlapis & terverifikasi</p></div>
+        <div class="feature-item"><i class="fas fa-headset"></i><h4>Support 24/7</h4><p>Tim customer service siap membantu kapan saja</p></div>
+        <div class="feature-item"><i class="fas fa-gem"></i><h4>Harga Terbaik</h4><p>Harga kompetitif dengan promo setiap hari</p></div>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <div class="social">
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-youtube"></i></a>
+            <a href="#"><i class="fab fa-discord"></i></a>
+        </div>
+        <p><i class="fas fa-heart"></i> TopUpPro &mdash; Premium Topup Center. &copy; 2026</p>
+    </footer>
+
+    <!-- ============================================================
+         FULL SCREEN TOPUP
+         ============================================================ -->
+    <div class="topup-fullscreen" id="topupFullscreen">
+        <div class="topup-header">
+            <button class="back-btn" id="closeTopup"><i class="fas fa-arrow-left"></i> Kembali</button>
+            <div class="topup-title"><i class="fas fa-shopping-cart"></i> Checkout <span id="topupProductName">-</span></div>
+            <div style="width:80px;"></div>
+        </div>
+        <div class="topup-body">
+            <div class="topup-product-info" id="topupProductInfo">
+                <div class="tpi-icon" id="tpiIcon"><i class="fas fa-gamepad"></i></div>
+                <div class="tpi-text">
+                    <h2 id="tpiName">-</h2>
+                    <div class="tpi-price" id="tpiPrice">-</div>
+                </div>
+            </div>
+
+            <div class="topup-section">
+                <div class="section-title"><i class="fas fa-user"></i> ID / Username</div>
+                <div class="topup-id-input">
+                    <input type="text" id="topupUserId" placeholder="Masukkan ID atau username..." />
+                </div>
+            </div>
+
+            <div class="topup-section">
+                <div class="section-title"><i class="fas fa-box"></i> Pilih Paket</div>
+                <div class="topup-packages" id="topupPackages"></div>
+            </div>
+
+            <div class="topup-section">
+                <div class="section-title"><i class="fas fa-credit-card"></i> Metode Pembayaran</div>
+                <div class="topup-payments" id="topupPayments"></div>
+            </div>
+
+            <div class="topup-summary">
+                <div class="summary-row"><span>Produk</span><span id="summaryProduct">-</span></div>
+                <div class="summary-row"><span>Paket</span><span id="summaryPackage">-</span></div>
+                <div class="summary-row"><span>ID / Username</span><span id="summaryUserId">-</span></div>
+                <div class="summary-row"><span>Metode Bayar</span><span id="summaryPayment">-</span></div>
+                <div class="summary-row total"><span>Total Bayar</span><span class="total-price" id="summaryTotal">Rp 0</span></div>
+            </div>
+
+            <div class="topup-actions">
+                <button class="btn-cancel-topup" id="btnCancelTopup"><i class="fas fa-times"></i> Batal</button>
+                <button class="btn-pay-topup" id="btnPayTopup"><i class="fas fa-credit-card"></i> Bayar Sekarang</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         SUCCESS FULLSCREEN
+         ============================================================ -->
+    <div class="success-fullscreen" id="successFullscreen">
+        <div class="success-content">
+            <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="success-title">🎉 Pembayaran Berhasil!</div>
+            <div class="success-sub">Transaksi Anda telah berhasil diproses</div>
+            <div class="success-details" id="successDetails">
+                <div class="sd-row"><span>Produk</span><span id="sProduct">-</span></div>
+                <div class="sd-row"><span>Paket</span><span id="sPackage">-</span></div>
+                <div class="sd-row"><span>ID / Username</span><span id="sUserId">-</span></div>
+                <div class="sd-row"><span>Metode Bayar</span><span id="sPayment">-</span></div>
+                <div class="sd-row"><span>Status</span><span class="sd-status"><i class="fas fa-check-circle"></i> SUKSES</span></div>
+                <div class="sd-row total"><span>Total Dibayar</span><span class="sd-total" id="sTotal">Rp 0</span></div>
+                <div class="sd-row" style="font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--border-color);padding-top:8px;margin-top:4px;">
+                    <span>Waktu Transaksi</span>
+                    <span id="sTime">-</span>
+                </div>
+            </div>
+            <button class="btn-success-close" id="btnSuccessClose"><i class="fas fa-home"></i> Kembali ke Beranda</button>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         AUTH MODAL
+         ============================================================ -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-box">
+            <button class="auth-close" id="authClose"><i class="fas fa-times"></i></button>
+            <div class="auth-header">
+                <div class="auth-icon"><i class="fas fa-user-circle"></i></div>
+                <h2>Selamat Datang</h2>
+                <p>Login atau daftar untuk pengalaman lebih baik</p>
+            </div>
+            <div class="auth-tabs">
+                <button class="active" data-tab="login">Login</button>
+                <button data-tab="register">Daftar</button>
+            </div>
+            <div class="auth-form active" id="loginForm">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="Masukkan email" />
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Masukkan password" />
+                <button class="btn-auth" id="btnLogin">Login</button>
+            </div>
+            <div class="auth-form" id="registerForm">
+                <label>Nama Lengkap</label>
+                <input type="text" id="regName" placeholder="Masukkan nama lengkap" />
+                <label>Email</label>
+                <input type="email" id="regEmail" placeholder="Masukkan email" />
+                <label>Password</label>
+                <input type="password" id="regPassword" placeholder="Masukkan password" />
+                <label>Nomor HP</label>
+                <input type="tel" id="regPhone" placeholder="Masukkan nomor HP" />
+                <button class="btn-auth" id="btnRegister">Daftar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         PROFILE MODAL
+         ============================================================ -->
+    <div class="profile-modal" id="profileModal">
+        <div class="profile-box">
+            <button class="profile-close" id="profileClose"><i class="fas fa-times"></i></button>
+            <div class="profile-avatar" id="profileAvatar">
+                <i class="fas fa-user" id="avatarIcon"></i>
+                <img id="avatarImg" style="display:none;" />
+                <div class="avatar-overlay">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <input type="file" id="avatarInput" accept="image/*" />
+            </div>
+            <div class="profile-name" id="profileName">User</div>
+            <div class="profile-email" id="profileEmail">user@email.com</div>
+            <div class="profile-phone" id="profilePhone">+62 812 3456 7890</div>
+            <div class="profile-premium free" id="profilePremium">
+                <span class="premium-badge">🟡 FREE MEMBER</span>
+            </div>
+            <div class="profile-stats">
+                <div class="pstat"><div class="pnum" id="profileOrders">0</div><div class="plabel">Pesanan</div></div>
+                <div class="pstat"><div class="pnum" id="profileWishlist">0</div><div class="plabel">Wishlist</div></div>
+                <div class="pstat"><div class="pnum" id="profilePoints">0</div><div class="plabel">Poin</div></div>
+            </div>
+
+            <div class="edit-toggle">
+                <button id="editToggleBtn"><i class="fas fa-edit"></i> Edit Profil</button>
+            </div>
+            <div class="edit-fields" id="editFields">
+                <label>Nama Lengkap</label>
+                <input type="text" id="editName" />
+                <label>Email</label>
+                <input type="email" id="editEmail" />
+                <label>Nomor HP</label>
+                <input type="tel" id="editPhone" />
+                <button class="btn-save-profile" id="btnSaveProfile"><i class="fas fa-save"></i> Simpan Perubahan</button>
+            </div>
+
+            <button class="btn-upgrade-premium" id="btnUpgradePremium">
+                <i class="fas fa-crown"></i> Upgrade ke Premium (Rp 99.000/bulan)
+            </button>
+
+            <button class="btn-logout" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  PAYMENT METHODS - PAKAI LOGO ASLI (URL GAMBAR)
+        //  GANTI URL GAMBAR SESUAI KEINGINAN ANDA
+        // ============================================================
+        const paymentMethods = [
+            { 
+                id: 'bca', 
+                name: 'BCA', 
+                icon: 'https://oceanslinkupl.rf.gd/uploads/efe39a34efc7a965db9129d250326a75.jpg', 
+                color: '#0055A4' 
+            },
+            { 
+                id: 'bni', 
+                name: 'BNI', 
+                icon: 'https://oceanslinkupl.rf.gd/uploads/badec58a1d920db4608a32a9e92223bd.jpg', 
+                color: '#1B3A5C' 
+            },
+            { 
+                id: 'mandiri', 
+                name: 'Mandiri', 
+                icon: 'https://oceanslinkupl.rf.gd/uploads/26f5e9c0a5e5cbf6a14869e55915e279.jpg', 
+                color: '#004B8F' 
+            },
+            { 
+                id: 'gopay', 
+                name: 'GoPay', 
+                icon: 'https://oceanslinkupl.rf.gd/uploads/ed34169b878d47709ec7e213a53917c9.jpg', 
+                color: '#00A9B4' 
+            },
+            { 
+                id: 'ovo', 
+                name: 'OVO', 
+                icon: 'https://oceanslinkupl.rf.gd/uploads/aaed87cef58279f3943b78dba7f4c562.jpg', 
+                color: '#3F9CFF' 
+            },
+            { 
+                id: 'dana', 
+                name: 'DANA', 
+                icon: 'https://oceanslinkupl.rf.gd/uploads/f6f0dd87e8d33e95d787e273f51cb0f8.jpg', 
+                color: '#005BAB' 
+            },
+            { 
+                id: 'qris', 
+                name: 'QRIS', 
+                icon: 'https://oceanslinkupl.rf.gd/uploads/3c1017b025342afb86f7db4c77a75369.jpg', 
+                color: '#2E7D32' 
+            },
+            { 
+                id: 'shopeepay', 
+                name: 'ShopeePay', 
+                icon: 'https://oceanslinkupl.rf.gd/uploads/83b9bd1e41fedafdc7e8787eabff1735.jpg', 
+                color: '#EE4D2D' 
+            }
+        ];
+
+        // ============================================================
+        //  DATA PRODUK - 40+ PRODUK DENGAN PAKET LENGKAP (5-10 PAKET)
+        // ============================================================
+        const productsData = [{
+            id: 1,
+            name: 'Free Fire',
+            category: 'game',
+            price: 15000,
+            originalPrice: 20000,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/54625ae345dbccf2ae491adb1e4ba8ea.jpg',
+            color: '#FF6B35',
+            badge: 'popular',
+            badgeText: '🔥 Populer',
+            rating: 4.8,
+            reviews: 1200,
+            sales: 5000,
+            isPremium: false,
+            packages: [
+                { label: '5 Diamond', price: 820, badge: 'best' },
+                { label: '10 Diamond', price: 1500, badge: null },
+                { label: '20 Diamond', price: 2800, badge: null },
+                { label: '50 Diamond', price: 6500, badge: 'hemat' },
+                { label: '100 Diamond', price: 12000, badge: null },
+                { label: '200 Diamond', price: 23000, badge: null },
+                { label: '500 Diamond', price: 55000, badge: 'populer' },
+                { label: '1000 Diamond', price: 105000, badge: null },
+                { label: '2000 Diamond', price: 200000, badge: null },
+                { label: '5000 Diamond', price: 480000, badge: null }
+            ]
+        }, {
+            id: 2,
+            name: 'Mobile Legends',
+            category: 'game',
+            price: 25000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/a84be90de8730b7908a68e112371e312.jpg',
+            color: '#6C63FF',
+            badge: 'popular',
+            badgeText: '🔥 Populer',
+            rating: 4.9,
+            reviews: 2000,
+            sales: 8000,
+            isPremium: false,
+            packages: [
+                { label: '10 Diamond', price: 1500, badge: null },
+                { label: '25 Diamond', price: 3200, badge: 'best' },
+                { label: '50 Diamond', price: 6000, badge: null },
+                { label: '100 Diamond', price: 11500, badge: 'hemat' },
+                { label: '250 Diamond', price: 28000, badge: null },
+                { label: '500 Diamond', price: 54000, badge: 'populer' },
+                { label: '1000 Diamond', price: 105000, badge: null },
+                { label: '2000 Diamond', price: 205000, badge: null },
+                { label: '5000 Diamond', price: 500000, badge: null }
+            ]
+        }, {
+            id: 3,
+            name: 'PUBG Mobile',
+            category: 'game',
+            price: 18000,
+            originalPrice: 25000,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/1ce4c8ec8d8070a4fb4ae852a4a640b5.jpg',
+            color: '#FFD93D',
+            badge: 'sale',
+            badgeText: '💸 Diskon',
+            rating: 4.6,
+            reviews: 800,
+            sales: 3000,
+            isPremium: false,
+            packages: [
+                { label: '10 UC', price: 1500, badge: null },
+                { label: '25 UC', price: 3500, badge: 'best' },
+                { label: '60 UC', price: 8500, badge: null },
+                { label: '125 UC', price: 17000, badge: 'hemat' },
+                { label: '300 UC', price: 40000, badge: null },
+                { label: '600 UC', price: 78000, badge: 'populer' },
+                { label: '1200 UC', price: 150000, badge: null },
+                { label: '3000 UC', price: 360000, badge: null },
+                { label: '6000 UC', price: 700000, badge: null }
+            ]
+        }, {
+            id: 4,
+            name: 'Genshin Impact',
+            category: 'game',
+            price: 50000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/a82fb4724465685c3cc8996961ba79d6.jpg',
+            color: '#00D2FF',
+            badge: 'new',
+            badgeText: '✨ New',
+            rating: 4.7,
+            reviews: 600,
+            sales: 1500,
+            isPremium: false,
+            packages: [
+                { label: '10 Genesis', price: 1500, badge: null },
+                { label: '20 Genesis', price: 3000, badge: 'best' },
+                { label: '60 Genesis', price: 8800, badge: null },
+                { label: '120 Genesis', price: 17000, badge: 'hemat' },
+                { label: '300 Genesis', price: 42000, badge: null },
+                { label: '600 Genesis', price: 83000, badge: 'populer' },
+                { label: '980 Genesis', price: 135000, badge: null },
+                { label: '1980 Genesis', price: 260000, badge: null },
+                { label: '3280 Genesis', price: 420000, badge: null }
+            ]
+        }, {
+            id: 5,
+            name: 'Valorant',
+            category: 'game',
+            price: 32000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/1f93c16acb3436ffc1a2da23e37e273f.jpg',
+            color: '#FD79A8',
+            badge: null,
+            rating: 4.6,
+            reviews: 500,
+            sales: 1800,
+            isPremium: false,
+            packages: [
+                { label: '100 VP', price: 1500, badge: null },
+                { label: '200 VP', price: 2900, badge: 'best' },
+                { label: '475 VP', price: 6800, badge: null },
+                { label: '1000 VP', price: 14000, badge: 'hemat' },
+                { label: '2050 VP', price: 28000, badge: null },
+                { label: '3650 VP', price: 49000, badge: 'populer' },
+                { label: '5350 VP', price: 71000, badge: null },
+                { label: '11000 VP', price: 144000, badge: null },
+                { label: '25000 VP', price: 320000, badge: null }
+            ]
+        }, {
+            id: 6,
+            name: 'Call of Duty Mobile',
+            category: 'game',
+            price: 22000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/f116955f2c2ad1e6b8b14123970dc0ec.jpg',
+            color: '#FF6B6B',
+            badge: 'new',
+            badgeText: '✨ New',
+            rating: 4.5,
+            reviews: 300,
+            sales: 900,
+            isPremium: false,
+            packages: [
+                { label: '40 CP', price: 1500, badge: null },
+                { label: '80 CP', price: 2900, badge: 'best' },
+                { label: '200 CP', price: 7200, badge: null },
+                { label: '500 CP', price: 17500, badge: 'hemat' },
+                { label: '1000 CP', price: 34000, badge: null },
+                { label: '2000 CP', price: 66000, badge: 'populer' },
+                { label: '5000 CP', price: 160000, badge: null },
+                { label: '10000 CP', price: 310000, badge: null },
+                { label: '25000 CP', price: 760000, badge: null }
+            ]
+        }, {
+            id: 7,
+            name: 'League of Legends',
+            category: 'game',
+            price: 45000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/d304452aeee29f2457a6ee1ea575aaf4.jpg',
+            color: '#C89B3C',
+            badge: 'popular',
+            badgeText: '🔥 Populer',
+            rating: 4.8,
+            reviews: 1500,
+            sales: 4000,
+            isPremium: false,
+            packages: [
+                { label: '500 RP', price: 45000, badge: 'best' },
+                { label: '1000 RP', price: 85000, badge: null },
+                { label: '2500 RP', price: 200000, badge: 'hemat' },
+                { label: '5000 RP', price: 380000, badge: 'populer' },
+                { label: '10000 RP', price: 720000, badge: null },
+                { label: '20000 RP', price: 1400000, badge: null }
+            ]
+        }, {
+            id: 8,
+            name: 'Dota 2',
+            category: 'game',
+            price: 35000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/fa0f8437d08e3cdbcb932bee66c85303.jpg',
+            color: '#9B59B6',
+            badge: null,
+            rating: 4.7,
+            reviews: 800,
+            sales: 2000,
+            isPremium: false,
+            packages: [
+                { label: '5 Level', price: 35000, badge: 'best' },
+                { label: '10 Level', price: 68000, badge: null },
+                { label: '25 Level', price: 160000, badge: 'hemat' },
+                { label: '50 Level', price: 310000, badge: 'populer' },
+                { label: '100 Level', price: 600000, badge: null },
+                { label: '200 Level', price: 1150000, badge: null }
+            ]
+        }, {
+            id: 9,
+            name: 'Grand Theft Auto V',
+            category: 'game',
+            price: 55000,
+            originalPrice: 75000,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/cf33bb69953c327df36d73e7d3dfbc34.jpg',
+            color: '#2ECC71',
+            badge: 'sale',
+            badgeText: '💸 Diskon',
+            rating: 4.9,
+            reviews: 2000,
+            sales: 6000,
+            isPremium: false,
+            packages: [
+                { label: '1.000.000 GTA$', price: 55000, badge: 'best' },
+                { label: '2.500.000 GTA$', price: 130000, badge: null },
+                { label: '5.000.000 GTA$', price: 250000, badge: 'hemat' },
+                { label: '10.000.000 GTA$', price: 480000, badge: 'populer' },
+                { label: '25.000.000 GTA$', price: 1150000, badge: null },
+                { label: '50.000.000 GTA$', price: 2200000, badge: null }
+            ]
+        }, {
+            id: 10,
+            name: 'Minecraft',
+            category: 'game',
+            price: 30000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/db4bb0d392b91c8f7ff7d8e3601c17a2.jpg',
+            color: '#4CAF50',
+            badge: null,
+            rating: 4.8,
+            reviews: 1200,
+            sales: 3500,
+            isPremium: false,
+            packages: [
+                { label: '100 Coins', price: 30000, badge: 'best' },
+                { label: '300 Coins', price: 85000, badge: null },
+                { label: '500 Coins', price: 135000, badge: 'hemat' },
+                { label: '1000 Coins', price: 260000, badge: 'populer' },
+                { label: '2500 Coins', price: 620000, badge: null },
+                { label: '5000 Coins', price: 1200000, badge: null }
+            ]
+        }, {
+            id: 11,
+            name: 'Roblox',
+            category: 'game',
+            price: 25000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/758b12c99c7389c58276442beb838b46.jpg',
+            color: '#00BFFF',
+            badge: 'popular',
+            badgeText: '🔥 Populer',
+            rating: 4.7,
+            reviews: 900,
+            sales: 2800,
+            isPremium: false,
+            packages: [
+                { label: '400 Robux', price: 25000, badge: 'best' },
+                { label: '800 Robux', price: 48000, badge: null },
+                { label: '2000 Robux', price: 115000, badge: 'hemat' },
+                { label: '4000 Robux', price: 220000, badge: 'populer' },
+                { label: '10000 Robux', price: 530000, badge: null },
+                { label: '20000 Robux', price: 1050000, badge: null }
+            ]
+        }, {
+            id: 12,
+            name: 'Counter Strike 2',
+            category: 'game',
+            price: 40000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/535d9ea5d42e34204fd5b4dd8c3860a9.jpg',
+            color: '#FF6B6B',
+            badge: 'new',
+            badgeText: '✨ New',
+            rating: 4.6,
+            reviews: 400,
+            sales: 1200,
+            isPremium: false,
+            packages: [
+                { label: '500 Premier Credits', price: 40000, badge: 'best' },
+                { label: '1000 Premier Credits', price: 78000, badge: null },
+                { label: '2500 Premier Credits', price: 190000, badge: 'hemat' },
+                { label: '5000 Premier Credits', price: 370000, badge: 'populer' },
+                { label: '10000 Premier Credits', price: 720000, badge: null },
+                { label: '25000 Premier Credits', price: 1750000, badge: null }
+            ]
+        }, {
+            id: 13,
+            name: 'FIFA 24',
+            category: 'game',
+            price: 60000,
+            originalPrice: 80000,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/1eec60555cfc39e43177f5e51e480090.jpg',
+            color: '#2ECC71',
+            badge: 'sale',
+            badgeText: '💸 Diskon',
+            rating: 4.5,
+            reviews: 300,
+            sales: 800,
+            isPremium: false,
+            packages: [
+                { label: '500 FIFA Points', price: 60000, badge: 'best' },
+                { label: '1000 FIFA Points', price: 115000, badge: null },
+                { label: '2500 FIFA Points', price: 280000, badge: 'hemat' },
+                { label: '5000 FIFA Points', price: 540000, badge: 'populer' },
+                { label: '12000 FIFA Points', price: 1250000, badge: null },
+                { label: '25000 FIFA Points', price: 2500000, badge: null }
+            ]
+        }, {
+            id: 14,
+            name: 'Ragnarok Online',
+            category: 'game',
+            price: 20000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/5c32fd4f507909b823cd273341a4a51d.jpg',
+            color: '#FF6B35',
+            badge: null,
+            rating: 4.3,
+            reviews: 200,
+            sales: 500,
+            isPremium: false,
+            packages: [
+                { label: '60 Cat Coins', price: 20000, badge: 'best' },
+                { label: '150 Cat Coins', price: 48000, badge: null },
+                { label: '300 Cat Coins', price: 92000, badge: 'hemat' },
+                { label: '600 Cat Coins', price: 180000, badge: 'populer' },
+                { label: '1200 Cat Coins', price: 350000, badge: null },
+                { label: '2500 Cat Coins', price: 700000, badge: null }
+            ]
+        }, {
+            id: 15,
+            name: 'Black Desert Mobile',
+            category: 'game',
+            price: 35000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/bdcce5c08221184897105d514f2d23fc.jpg',
+            color: '#6C63FF',
+            badge: null,
+            rating: 4.4,
+            reviews: 250,
+            sales: 700,
+            isPremium: false,
+            packages: [
+                { label: '100 Pearls', price: 35000, badge: 'best' },
+                { label: '300 Pearls', price: 100000, badge: null },
+                { label: '500 Pearls', price: 160000, badge: 'hemat' },
+                { label: '1000 Pearls', price: 310000, badge: 'populer' },
+                { label: '2000 Pearls', price: 600000, badge: null },
+                { label: '5000 Pearls', price: 1450000, badge: null }
+            ]
+        }, {
+            id: 16,
+            name: 'Ragnarok M',
+            category: 'game',
+            price: 22000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/b147f336e1f10799a2a8aa6a6a280f1d.jpg',
+            color: '#FF9A76',
+            badge: null,
+            rating: 4.2,
+            reviews: 150,
+            sales: 400,
+            isPremium: false,
+            packages: [
+                { label: '60 Big Cat Coins', price: 22000, badge: 'best' },
+                { label: '150 Big Cat Coins', price: 52000, badge: null },
+                { label: '300 Big Cat Coins', price: 100000, badge: 'hemat' },
+                { label: '600 Big Cat Coins', price: 195000, badge: 'populer' },
+                { label: '1200 Big Cat Coins', price: 380000, badge: null },
+                { label: '2500 Big Cat Coins', price: 750000, badge: null }
+            ]
+        }, {
+            id: 17,
+            name: 'Arena of Valor',
+            category: 'game',
+            price: 20000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/22af4b2e1570bfafc649f9edd83833cc.jpg',
+            color: '#FF6B6B',
+            badge: null,
+            rating: 4.5,
+            reviews: 400,
+            sales: 1200,
+            isPremium: false,
+            packages: [
+                { label: '100 Vouchers', price: 20000, badge: 'best' },
+                { label: '250 Vouchers', price: 48000, badge: null },
+                { label: '500 Vouchers', price: 92000, badge: 'hemat' },
+                { label: '1000 Vouchers', price: 180000, badge: 'populer' },
+                { label: '2000 Vouchers', price: 350000, badge: null },
+                { label: '5000 Vouchers', price: 850000, badge: null }
+            ]
+        }, {
+            id: 18,
+            name: 'Dragon Raja',
+            category: 'game',
+            price: 45000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/153d1a3061fbc0c0ce8acb655c714f7d.jpg',
+            color: '#9B59B6',
+            badge: 'new',
+            badgeText: '✨ New',
+            rating: 4.6,
+            reviews: 300,
+            sales: 800,
+            isPremium: false,
+            packages: [
+                { label: '100 Diamonds', price: 45000, badge: 'best' },
+                { label: '300 Diamonds', price: 130000, badge: null },
+                { label: '500 Diamonds', price: 210000, badge: 'hemat' },
+                { label: '1000 Diamonds', price: 400000, badge: 'populer' },
+                { label: '2500 Diamonds', price: 950000, badge: null },
+                { label: '5000 Diamonds', price: 1850000, badge: null }
+            ]
+        }, {
+            id: 19,
+            name: 'Brawl Stars',
+            category: 'game',
+            price: 15000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/fc0b94ee52b5a92529faf57b69961ac8.jpg',
+            color: '#FFD93D',
+            badge: 'popular',
+            badgeText: '🔥 Populer',
+            rating: 4.7,
+            reviews: 800,
+            sales: 2500,
+            isPremium: false,
+            packages: [
+                { label: '30 Gems', price: 15000, badge: 'best' },
+                { label: '80 Gems', price: 38000, badge: null },
+                { label: '150 Gems', price: 68000, badge: 'hemat' },
+                { label: '300 Gems', price: 130000, badge: 'populer' },
+                { label: '600 Gems', price: 250000, badge: null },
+                { label: '1200 Gems', price: 480000, badge: null }
+            ]
+        }, {
+            id: 20,
+            name: 'WhatsApp',
+            category: 'app',
+            price: 5000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/57ea6e273b2e107f7f5fe3ff55701687.jpg',
+            color: '#25D366',
+            badge: null,
+            rating: 4.5,
+            reviews: 400,
+            sales: 2000,
+            isPremium: false,
+            packages: [
+                { label: 'Paket 100 MB', price: 820, badge: 'best' },
+                { label: 'Paket 500 MB', price: 3500, badge: null },
+                { label: 'Paket 1 GB', price: 6500, badge: null },
+                { label: 'Paket 3 GB', price: 18000, badge: 'hemat' },
+                { label: 'Paket 5 GB', price: 28000, badge: null },
+                { label: 'Paket 10 GB', price: 52000, badge: 'populer' },
+                { label: 'Paket 25 GB', price: 125000, badge: null },
+                { label: 'Paket 50 GB', price: 240000, badge: null }
+            ]
+        }, {
+            id: 21,
+            name: 'Telegram',
+            category: 'app',
+            price: 5000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/21153c37a384d082a2c40be86fc811d1.jpg',
+            color: '#0088cc',
+            badge: null,
+            rating: 4.4,
+            reviews: 300,
+            sales: 1200,
+            isPremium: false,
+            packages: [
+                { label: 'Paket 100 MB', price: 820, badge: 'best' },
+                { label: 'Paket 500 MB', price: 3500, badge: null },
+                { label: 'Paket 1 GB', price: 6500, badge: null },
+                { label: 'Paket 3 GB', price: 18000, badge: 'hemat' },
+                { label: 'Paket 5 GB', price: 28000, badge: null },
+                { label: 'Paket 10 GB', price: 52000, badge: 'populer' },
+                { label: 'Paket 25 GB', price: 125000, badge: null }
+            ]
+        }, {
+            id: 22,
+            name: 'Netflix',
+            category: 'app',
+            price: 55000,
+            originalPrice: 70000,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/41cae27859a1dddb20edf6b17da304ae.jpg',
+            color: '#E50914',
+            badge: 'sale',
+            badgeText: '💸 Diskon',
+            rating: 4.9,
+            reviews: 2000,
+            sales: 6000,
+            isPremium: false,
+            packages: [
+                { label: 'Mobile 1 Hari', price: 2000, badge: null },
+                { label: 'Mobile 1 Minggu', price: 14000, badge: 'best' },
+                { label: 'Mobile 1 Bulan', price: 55000, badge: null },
+                { label: 'Basic 1 Bulan', price: 85000, badge: 'hemat' },
+                { label: 'Standard 1 Bulan', price: 130000, badge: null },
+                { label: 'Premium 1 Bulan', price: 165000, badge: 'populer' },
+                { label: 'Premium 3 Bulan', price: 470000, badge: null },
+                { label: 'Premium 6 Bulan', price: 920000, badge: null },
+                { label: 'Premium 12 Bulan', price: 1800000, badge: null }
+            ]
+        }, {
+            id: 23,
+            name: 'Spotify',
+            category: 'app',
+            price: 25000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/ac86f3898bf6201459e546c3f851f7c6.jpg',
+            color: '#1DB954',
+            badge: null,
+            rating: 4.7,
+            reviews: 800,
+            sales: 2500,
+            isPremium: false,
+            packages: [
+                { label: 'Premium 1 Hari', price: 1000, badge: null },
+                { label: 'Premium 1 Minggu', price: 6500, badge: 'best' },
+                { label: 'Premium 1 Bulan', price: 25000, badge: null },
+                { label: 'Premium 3 Bulan', price: 70000, badge: 'hemat' },
+                { label: 'Premium 6 Bulan', price: 135000, badge: null },
+                { label: 'Premium 12 Bulan', price: 260000, badge: 'populer' },
+                { label: 'Family 12 Bulan', price: 420000, badge: null },
+                { label: 'Family 24 Bulan', price: 820000, badge: null }
+            ]
+        }, {
+            id: 24,
+            name: 'YouTube Premium',
+            category: 'app',
+            price: 45000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/b4fbbb50ed6e1c0e37653e6dc5888160.jpg',
+            color: '#FF0000',
+            badge: null,
+            rating: 4.6,
+            reviews: 600,
+            sales: 2000,
+            isPremium: false,
+            packages: [
+                { label: 'Premium 1 Bulan', price: 45000, badge: 'best' },
+                { label: 'Premium 3 Bulan', price: 125000, badge: null },
+                { label: 'Premium 6 Bulan', price: 240000, badge: 'hemat' },
+                { label: 'Premium 12 Bulan', price: 460000, badge: 'populer' },
+                { label: 'Family 12 Bulan', price: 690000, badge: null },
+                { label: 'Family 24 Bulan', price: 1350000, badge: null }
+            ]
+        }, {
+            id: 25,
+            name: 'Disney+',
+            category: 'app',
+            price: 65000,
+            originalPrice: 80000,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/1a5234ee2e8a6429a978d47382f69720.jpg',
+            color: '#0066FF',
+            badge: 'sale',
+            badgeText: '💸 Diskon',
+            rating: 4.8,
+            reviews: 1000,
+            sales: 3000,
+            isPremium: false,
+            packages: [
+                { label: '1 Bulan', price: 65000, badge: 'best' },
+                { label: '3 Bulan', price: 185000, badge: null },
+                { label: '6 Bulan', price: 360000, badge: 'hemat' },
+                { label: '12 Bulan', price: 690000, badge: 'populer' },
+                { label: '24 Bulan', price: 1300000, badge: null },
+                { label: '36 Bulan', price: 1900000, badge: null }
+            ]
+        }, {
+            id: 26,
+            name: 'Microsoft Office',
+            category: 'app',
+            price: 120000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/528a8745658a93ff09997e964dd7f9d8.jpg',
+            color: '#00A4EF',
+            badge: null,
+            rating: 4.7,
+            reviews: 500,
+            sales: 1500,
+            isPremium: false,
+            packages: [
+                { label: 'Personal 1 Bulan', price: 120000, badge: 'best' },
+                { label: 'Personal 6 Bulan', price: 650000, badge: null },
+                { label: 'Family 1 Bulan', price: 160000, badge: 'hemat' },
+                { label: 'Family 6 Bulan', price: 850000, badge: 'populer' },
+                { label: 'Family 12 Bulan', price: 1600000, badge: null },
+                { label: 'Family 24 Bulan', price: 3100000, badge: null }
+            ]
+        }, {
+            id: 27,
+            name: 'Adobe Creative Cloud',
+            category: 'app',
+            price: 250000,
+            originalPrice: 320000,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/a765f5dc9caa5e1201b5078f65bef034.jpg',
+            color: '#FF0000',
+            badge: 'sale',
+            badgeText: '💸 Diskon',
+            rating: 4.9,
+            reviews: 800,
+            sales: 2000,
+            isPremium: false,
+            packages: [
+                { label: '1 Bulan', price: 250000, badge: 'best' },
+                { label: '3 Bulan', price: 700000, badge: null },
+                { label: '6 Bulan', price: 1350000, badge: 'hemat' },
+                { label: '12 Bulan', price: 2500000, badge: 'populer' },
+                { label: '24 Bulan', price: 4800000, badge: null },
+                { label: '36 Bulan', price: 6900000, badge: null }
+            ]
+        }, {
+            id: 28,
+            name: 'Canva Pro',
+            category: 'app',
+            price: 85000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/e5f9adc8a0c23b9764767396b38aa92b.jpg',
+            color: '#00C4CC',
+            badge: null,
+            rating: 4.8,
+            reviews: 600,
+            sales: 1800,
+            isPremium: false,
+            packages: [
+                { label: '1 Bulan', price: 85000, badge: 'best' },
+                { label: '6 Bulan', price: 460000, badge: null },
+                { label: '12 Bulan', price: 840000, badge: 'hemat' },
+                { label: '24 Bulan', price: 1600000, badge: 'populer' },
+                { label: '36 Bulan', price: 2350000, badge: null }
+            ]
+        }, {
+            id: 29,
+            name: 'NordVPN',
+            category: 'app',
+            price: 95000,
+            originalPrice: 120000,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/b89042321fb33ad1bd5a19bb2a93527d.jpg',
+            color: '#00AFF0',
+            badge: 'sale',
+            badgeText: '💸 Diskon',
+            rating: 4.9,
+            reviews: 1200,
+            sales: 3500,
+            isPremium: false,
+            packages: [
+                { label: '1 Bulan', price: 95000, badge: 'best' },
+                { label: '6 Bulan', price: 520000, badge: null },
+                { label: '12 Bulan', price: 950000, badge: 'hemat' },
+                { label: '24 Bulan', price: 1700000, badge: 'populer' },
+                { label: '36 Bulan', price: 2400000, badge: null },
+                { label: '48 Bulan', price: 3100000, badge: null }
+            ]
+        }, {
+            id: 30,
+            name: 'Google Play',
+            category: 'voucher',
+            price: 120000,
+            originalPrice: 150000,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/e853e305fb8c0046b470b94c69d96f97.jpg',
+            color: '#34a853',
+            badge: 'sale',
+            badgeText: '💸 Diskon',
+            rating: 4.9,
+            reviews: 1500,
+            sales: 4500,
+            isPremium: false,
+            packages: [
+                { label: 'Rp 10.000', price: 10000, badge: null },
+                { label: 'Rp 20.000', price: 20000, badge: 'best' },
+                { label: 'Rp 50.000', price: 50000, badge: null },
+                { label: 'Rp 100.000', price: 100000, badge: 'hemat' },
+                { label: 'Rp 150.000', price: 145000, badge: null },
+                { label: 'Rp 300.000', price: 290000, badge: 'populer' },
+                { label: 'Rp 500.000', price: 480000, badge: null },
+                { label: 'Rp 1.000.000', price: 950000, badge: null },
+                { label: 'Rp 2.000.000', price: 1900000, badge: null }
+            ]
+        }, {
+            id: 31,
+            name: 'Apple Store',
+            category: 'voucher',
+            price: 150000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/cbc6a104a4a56eeb7c628316e2d0d36f.jpg',
+            color: '#555',
+            badge: null,
+            rating: 4.8,
+            reviews: 900,
+            sales: 2800,
+            isPremium: false,
+            packages: [
+                { label: '$1', price: 17000, badge: null },
+                { label: '$5', price: 85000, badge: 'best' },
+                { label: '$10', price: 165000, badge: null },
+                { label: '$25', price: 400000, badge: 'hemat' },
+                { label: '$50', price: 780000, badge: null },
+                { label: '$100', price: 1500000, badge: 'populer' },
+                { label: '$200', price: 2950000, badge: null },
+                { label: '$500', price: 7300000, badge: null }
+            ]
+        }, {
+            id: 32,
+            name: 'Steam Wallet',
+            category: 'voucher',
+            price: 100000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/af6ceb909d8fb62edfd7ff9ce15e1a77.jpg',
+            color: '#1b2838',
+            badge: 'popular',
+            badgeText: '🔥 Populer',
+            rating: 4.7,
+            reviews: 700,
+            sales: 3200,
+            isPremium: false,
+            packages: [
+                { label: '$1', price: 17000, badge: null },
+                { label: '$5', price: 85000, badge: 'best' },
+                { label: '$10', price: 165000, badge: null },
+                { label: '$20', price: 320000, badge: 'hemat' },
+                { label: '$50', price: 780000, badge: null },
+                { label: '$100', price: 1520000, badge: 'populer' },
+                { label: '$200', price: 3000000, badge: null },
+                { label: '$500', price: 7400000, badge: null }
+            ]
+        }, {
+            id: 33,
+            name: 'PSN Wallet',
+            category: 'voucher',
+            price: 200000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/8bb15a41743058d309f4027ae0383da7.jpg',
+            color: '#003791',
+            badge: null,
+            rating: 4.7,
+            reviews: 500,
+            sales: 1600,
+            isPremium: false,
+            packages: [
+                { label: '$10', price: 170000, badge: null },
+                { label: '$25', price: 410000, badge: 'best' },
+                { label: '$50', price: 800000, badge: 'hemat' },
+                { label: '$100', price: 1550000, badge: 'populer' },
+                { label: '$200', price: 3050000, badge: null },
+                { label: '$500', price: 7500000, badge: null }
+            ]
+        }, {
+            id: 34,
+            name: 'Xbox Gift Card',
+            category: 'voucher',
+            price: 180000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/9ab12147f36ec8769343b269987dc95d.jpg',
+            color: '#107C10',
+            badge: null,
+            rating: 4.6,
+            reviews: 400,
+            sales: 1200,
+            isPremium: false,
+            packages: [
+                { label: '$10', price: 170000, badge: null },
+                { label: '$25', price: 410000, badge: 'best' },
+                { label: '$50', price: 800000, badge: 'hemat' },
+                { label: '$100', price: 1550000, badge: 'populer' },
+                { label: '$200', price: 3050000, badge: null },
+                { label: '$500', price: 7500000, badge: null }
+            ]
+        }, {
+            id: 35,
+            name: 'Epic Games',
+            category: 'voucher',
+            price: 90000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/e48e007998a8d42ec07c5403c7422358.jpg',
+            color: '#000000',
+            badge: 'new',
+            badgeText: '✨ New',
+            rating: 4.5,
+            reviews: 300,
+            sales: 800,
+            isPremium: false,
+            packages: [
+                { label: '$10', price: 165000, badge: 'best' },
+                { label: '$25', price: 400000, badge: null },
+                { label: '$50', price: 780000, badge: 'hemat' },
+                { label: '$100', price: 1500000, badge: 'populer' },
+                { label: '$200', price: 2950000, badge: null },
+                { label: '$500', price: 7300000, badge: null }
+            ]
+        }, {
+            id: 36,
+            name: 'Telkomsel Voucher',
+            category: 'voucher',
+            price: 25000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/7ee9280fd240f20752d8ec55334c3888.jpg',
+            color: '#E60000',
+            badge: 'popular',
+            badgeText: '🔥 Populer',
+            rating: 4.8,
+            reviews: 1000,
+            sales: 5000,
+            isPremium: false,
+            packages: [
+                { label: 'Rp 25.000', price: 25000, badge: 'best' },
+                { label: 'Rp 50.000', price: 50000, badge: null },
+                { label: 'Rp 100.000', price: 100000, badge: 'hemat' },
+                { label: 'Rp 200.000', price: 200000, badge: 'populer' },
+                { label: 'Rp 500.000', price: 500000, badge: null },
+                { label: 'Rp 1.000.000', price: 1000000, badge: null }
+            ]
+        }, {
+            id: 37,
+            name: 'Gopay Voucher',
+            category: 'voucher',
+            price: 50000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/e995238e7256af42734f65d1653a4a4a.jpg',
+            color: '#00A9B4',
+            badge: null,
+            rating: 4.8,
+            reviews: 1000,
+            sales: 3200,
+            isPremium: false,
+            packages: [
+                { label: 'Rp 25.000', price: 25000, badge: null },
+                { label: 'Rp 50.000', price: 50000, badge: 'best' },
+                { label: 'Rp 100.000', price: 100000, badge: 'hemat' },
+                { label: 'Rp 200.000', price: 200000, badge: 'populer' },
+                { label: 'Rp 500.000', price: 500000, badge: null },
+                { label: 'Rp 1.000.000', price: 1000000, badge: null }
+            ]
+        }, {
+            id: 38,
+            name: 'Ovo Voucher',
+            category: 'voucher',
+            price: 50000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/801eabeb11312363c24c6d9d8d31c0e8.jpg',
+            color: '#3F9CFF',
+            badge: null,
+            rating: 4.8,
+            reviews: 900,
+            sales: 2800,
+            isPremium: false,
+            packages: [
+                { label: 'Rp 25.000', price: 25000, badge: null },
+                { label: 'Rp 50.000', price: 50000, badge: 'best' },
+                { label: 'Rp 100.000', price: 100000, badge: 'hemat' },
+                { label: 'Rp 200.000', price: 200000, badge: 'populer' },
+                { label: 'Rp 500.000', price: 500000, badge: null },
+                { label: 'Rp 1.000.000', price: 1000000, badge: null }
+            ]
+        }, {
+            id: 39,
+            name: 'Dana Voucher',
+            category: 'voucher',
+            price: 50000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/d5929c59d5f66f8ae7841084de0adcf1.jpg',
+            color: '#005BAB',
+            badge: null,
+            rating: 4.7,
+            reviews: 800,
+            sales: 2500,
+            isPremium: false,
+            packages: [
+                { label: 'Rp 25.000', price: 25000, badge: null },
+                { label: 'Rp 50.000', price: 50000, badge: 'best' },
+                { label: 'Rp 100.000', price: 100000, badge: 'hemat' },
+                { label: 'Rp 200.000', price: 200000, badge: 'populer' },
+                { label: 'Rp 500.000', price: 500000, badge: null },
+                { label: 'Rp 1.000.000', price: 1000000, badge: null }
+            ]
+        }, {
+            id: 40,
+            name: 'ShopeePay Voucher',
+            category: 'voucher',
+            price: 50000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/5d3f68c75cfe42bfeccd46d4f41e5b4c.jpg',
+            color: '#EE4D2D',
+            badge: null,
+            rating: 4.7,
+            reviews: 700,
+            sales: 2200,
+            isPremium: false,
+            packages: [
+                { label: 'Rp 25.000', price: 25000, badge: null },
+                { label: 'Rp 50.000', price: 50000, badge: 'best' },
+                { label: 'Rp 100.000', price: 100000, badge: 'hemat' },
+                { label: 'Rp 200.000', price: 200000, badge: 'populer' },
+                { label: 'Rp 500.000', price: 500000, badge: null },
+                { label: 'Rp 1.000.000', price: 1000000, badge: null }
+            ]
+        }, {
+            id: 41,
+            name: 'Amazon Gift Card',
+            category: 'voucher',
+            price: 180000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/ea66b37db4e5580534cdc3571b63e439.jpg',
+            color: '#FF9900',
+            badge: 'new',
+            badgeText: '✨ New',
+            rating: 4.7,
+            reviews: 400,
+            sales: 1000,
+            isPremium: false,
+            packages: [
+                { label: '$5', price: 90000, badge: null },
+                { label: '$10', price: 175000, badge: 'best' },
+                { label: '$25', price: 430000, badge: 'hemat' },
+                { label: '$50', price: 840000, badge: 'populer' },
+                { label: '$100', price: 1650000, badge: null },
+                { label: '$200', price: 3250000, badge: null },
+                { label: '$500', price: 8000000, badge: null }
+            ]
+        }, {
+            id: 42,
+            name: 'Razer Gold',
+            category: 'voucher',
+            price: 75000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/ff27724d7d826767c103ca8deab33fea.jpg',
+            color: '#00FF00',
+            badge: null,
+            rating: 4.4,
+            reviews: 250,
+            sales: 700,
+            isPremium: false,
+            packages: [
+                { label: '$5', price: 85000, badge: 'best' },
+                { label: '$10', price: 165000, badge: null },
+                { label: '$20', price: 320000, badge: 'hemat' },
+                { label: '$50', price: 780000, badge: 'populer' },
+                { label: '$100', price: 1500000, badge: null },
+                { label: '$200', price: 2950000, badge: null }
+            ]
+        }, {
+            id: 43,
+            name: 'Unipin',
+            category: 'voucher',
+            price: 30000,
+            originalPrice: null,
+            iconType: 'image',
+            icon: 'https://oceanslinkupl.rf.gd/uploads/b58ae3286e4db23b58e276925969ffe5.jpg',
+            color: '#FF6B00',
+            badge: null,
+            rating: 4.3,
+            reviews: 200,
+            sales: 500,
+            isPremium: false,
+            packages: [
+                { label: 'Rp 20.000', price: 20000, badge: null },
+                { label: 'Rp 50.000', price: 50000, badge: 'best' },
+                { label: 'Rp 100.000', price: 100000, badge: 'hemat' },
+                { label: 'Rp 200.000', price: 200000, badge: 'populer' },
+                { label: 'Rp 500.000', price: 500000, badge: null },
+                { label: 'Rp 1.000.000', price: 1000000, badge: null }
+            ]
+        }];
+
+        // ============================================================
+        //  USER SYSTEM - TETAP SAMA
+        // ============================================================
+        let currentUser = null;
+
+        function loadUser() {
+            const saved = localStorage.getItem('topupUser');
+            if (saved) {
+                try {
+                    currentUser = JSON.parse(saved);
+                    updateUIForUser();
+                    return true;
+                } catch (e) {}
+            }
+            return false;
+        }
+
+        function saveUser() {
+            if (currentUser) {
+                localStorage.setItem('topupUser', JSON.stringify(currentUser));
+            }
+        }
+
+        function isPremium() {
+            return currentUser && currentUser.isPremium === true;
+        }
+
+        function updateUIForUser() {
+            if (currentUser) {
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('profileBtn').style.display = 'flex';
+                document.getElementById('navUsername').textContent = currentUser.name || 'User';
+                const avatar = document.getElementById('navAvatar');
+                if (currentUser.avatar) {
+                    avatar.innerHTML = `<img src="${currentUser.avatar}" />`;
+                } else {
+                    avatar.innerHTML = `<i class="fas fa-user"></i>`;
+                }
+                const premiumBadge = document.getElementById('navPremiumBadge');
+                if (currentUser.isPremium) {
+                    premiumBadge.style.display = 'inline';
+                } else {
+                    premiumBadge.style.display = 'none';
+                }
+                document.getElementById('profileName').textContent = currentUser.name || 'User';
+                document.getElementById('profileEmail').textContent = currentUser.email || 'user@email.com';
+                document.getElementById('profilePhone').textContent = currentUser.phone || '+62 812 3456 7890';
+                const avatarProfile = document.getElementById('avatarImg');
+                const avatarIcon = document.getElementById('avatarIcon');
+                if (currentUser.avatar) {
+                    avatarProfile.src = currentUser.avatar;
+                    avatarProfile.style.display = 'block';
+                    avatarIcon.style.display = 'none';
+                } else {
+                    avatarProfile.style.display = 'none';
+                    avatarIcon.style.display = 'block';
+                }
+                document.getElementById('profileOrders').textContent = state.history.length || 0;
+                document.getElementById('profileWishlist').textContent = state.wishlist.length || 0;
+                document.getElementById('profilePoints').textContent = Math.floor(state.history.length * 10) || 0;
+
+                const premiumDiv = document.getElementById('profilePremium');
+                if (currentUser.isPremium) {
+                    premiumDiv.className = 'profile-premium premium';
+                    premiumDiv.innerHTML = '<span class="premium-badge">⭐ PREMIUM MEMBER</span>';
+                    document.getElementById('btnUpgradePremium').textContent = '✅ Sudah Premium';
+                    document.getElementById('btnUpgradePremium').disabled = true;
+                } else {
+                    premiumDiv.className = 'profile-premium free';
+                    premiumDiv.innerHTML = '<span class="premium-badge">🟡 FREE MEMBER</span>';
+                    document.getElementById('btnUpgradePremium').textContent = '⭐ Upgrade ke Premium (Rp 99.000/bulan)';
+                    document.getElementById('btnUpgradePremium').disabled = false;
+                }
+
+                document.getElementById('editName').value = currentUser.name || '';
+                document.getElementById('editEmail').value = currentUser.email || '';
+                document.getElementById('editPhone').value = currentUser.phone || '';
+            } else {
+                document.getElementById('loginBtn').style.display = 'block';
+                document.getElementById('profileBtn').style.display = 'none';
+            }
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem('topupUser');
+            updateUIForUser();
+            showToast('Logout', 'Anda telah logout', 'info');
+            closeProfile();
+            renderProducts();
+        }
+
+        // ============================================================
+        //  STATE - TETAP SAMA
+        // ============================================================
+        let state = {
+            cart: [],
+            wishlist: [],
+            history: [],
+            currentFilter: 'all',
+            searchQuery: '',
+            theme: 'dark',
+            isProcessing: false
+        };
+
+        let selectedProduct = null;
+        let selectedPackage = null;
+        let selectedPayment = null;
+        let userId = '';
+
+        // ============================================================
+        //  TOAST - TETAP SAMA
+        // ============================================================
+        function showToast(title, message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle' };
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <div class="toast-icon ${type}"><i class="fas ${icons[type] || icons.info}"></i></div>
+                <div class="toast-content"><div class="toast-title">${title}</div><div class="toast-message">${message}</div></div>
+                <button class="toast-close"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(toast);
+            toast.querySelector('.toast-close').addEventListener('click', () => {
+                toast.classList.add('removing');
+                setTimeout(() => toast.remove(), 500);
+            });
+            setTimeout(() => {
+                toast.classList.add('removing');
+                setTimeout(() => toast.remove(), 500);
+            }, duration);
+        }
+
+        // ============================================================
+        //  CART - TETAP SAMA
+        // ============================================================
+        function addToCart(productId, qty = 1) {
+            const existing = state.cart.find(item => item.productId === productId);
+            if (existing) { existing.qty += qty; } else { state.cart.push({ productId, qty }); }
+            updateCartUI();
+        }
+
+        function getCartCount() {
+            return state.cart.reduce((sum, item) => sum + item.qty, 0);
+        }
+
+        function updateCartUI() {
+            document.getElementById('cartCount').textContent = getCartCount();
+        }
+
+        // ============================================================
+        //  WISHLIST - TETAP SAMA
+        // ============================================================
+        function toggleWishlist(productId) {
+            const index = state.wishlist.indexOf(productId);
+            if (index > -1) {
+                state.wishlist.splice(index, 1);
+                showToast('Dihapus', 'Produk dihapus dari wishlist', 'info');
+            } else {
+                state.wishlist.push(productId);
+                const product = productsData.find(p => p.id === productId);
+                showToast('Ditambahkan!', `${product.name} ditambahkan ke wishlist`, 'success');
+            }
+            document.getElementById('wishlistCount').textContent = state.wishlist.length;
+            if (currentUser) {
+                currentUser.wishlist = state.wishlist;
+                saveUser();
+                document.getElementById('profileWishlist').textContent = state.wishlist.length;
+            }
+            renderProducts();
+        }
+
+        function isInWishlist(productId) {
+            return state.wishlist.includes(productId);
+        }
+
+        // ============================================================
+        //  HISTORY - TETAP SAMA
+        // ============================================================
+        function addHistory(productName, price, status = 'success') {
+            state.history.unshift({
+                id: Date.now() + Math.random().toString(36).substr(2, 5),
+                productName,
+                price,
+                status,
+                date: new Date().toLocaleString('id-ID'),
+                timestamp: new Date().toISOString()
+            });
+            if (state.history.length > 50) state.history.pop();
+            if (currentUser) {
+                currentUser.history = state.history;
+                saveUser();
+                document.getElementById('profileOrders').textContent = state.history.length;
+                document.getElementById('profilePoints').textContent = Math.floor(state.history.length * 10);
+            }
+        }
+
+        // ============================================================
+        //  RENDER PRODUCTS - TETAP SAMA
+        // ============================================================
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+
+            let filtered = productsData.filter(p => {
+                const matchFilter = state.currentFilter === 'all' ||
+                    p.category === state.currentFilter ||
+                    (state.currentFilter === 'popular' && p.badge === 'popular') ||
+                    (state.currentFilter === 'sale' && p.badge === 'sale');
+                const matchSearch = p.name.toLowerCase().includes(state.searchQuery.toLowerCase());
+                return matchFilter && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML =
+                    `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;"><i class="fas fa-search" style="font-size:3rem;color:var(--text-muted);display:block;margin-bottom:16px;"></i><h3 style="color:var(--text-secondary);">Tidak ada produk yang cocok</h3><p style="color:var(--text-muted);margin-top:8px;">Coba ubah filter atau kata kunci pencarian</p></div>`;
+                return;
+            }
+
+            filtered.forEach((p, index) => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.style.animationDelay = `${index * 0.015}s`;
+
+                let iconHTML = '';
+                if (p.iconType === 'fa') iconHTML = `<i class="fas ${p.icon}"></i>`;
+                else if (p.iconType === 'image') iconHTML =
+                    `<img src="${p.icon}" alt="${p.name}" onerror="this.style.display='none'" />`;
+                else if (p.iconType === 'emoji') iconHTML = `<span style="font-size:36px;">${p.icon}</span>`;
+                else iconHTML = `<i class="fas fa-gamepad"></i>`;
+
+                let badgeHTML = '';
+                if (p.badge) badgeHTML = `<span class="badge ${p.badge}">${p.badgeText || p.badge}</span>`;
+
+                const wishlistActive = isInWishlist(p.id) ? 'active' : '';
+                const price = p.price;
+                const originalPrice = p.originalPrice && p.originalPrice > price ? p.originalPrice : null;
+
+                const isLocked = p.isPremium && !isPremium();
+                const btnText = isLocked ? '🔒 Premium Only' : 'Topup';
+
+                card.innerHTML = `
+                    ${badgeHTML}
+                    <button class="wishlist-btn ${wishlistActive}" onclick="event.stopPropagation();toggleWishlist(${p.id})">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    <div class="product-icon" style="color:${p.color};background:${p.color}20;">
+                        ${iconHTML}
+                    </div>
+                    <h3>${p.name}</h3>
+                    <div class="rating">
+                        ${'★'.repeat(Math.floor(p.rating || 0))}${(p.rating % 1) >= 0.5 ? '★' : ''}
+                        <span>(${p.reviews || 0})</span>
+                    </div>
+                    <div class="price">
+                        Rp ${price.toLocaleString()}
+                        ${originalPrice ? `<span class="original-price">Rp ${originalPrice.toLocaleString()}</span>` : ''}
+                    </div>
+                    <span class="category-tag">${p.category}</span>
+                    <button class="btn-order" onclick="event.stopPropagation();openTopup(${p.id})" ${isLocked ? 'disabled' : ''}>
+                        <i class="fas fa-shopping-cart"></i> ${btnText}
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ============================================================
+        //  FULL SCREEN TOPUP - TETAP SAMA
+        // ============================================================
+        function openTopup(productId) {
+            const product = productsData.find(p => p.id === productId);
+            if (!product) return;
+
+            if (product.isPremium && !isPremium()) {
+                showToast('🔒 Premium Required', 'Upgrade ke Premium untuk akses produk ini!', 'warning');
+                return;
+            }
+
+            selectedProduct = product;
+            let availablePackages = product.packages || [];
+            if (!isPremium()) {
+                availablePackages = product.packages.filter(pkg => !pkg.isPremium);
+            }
+            selectedPackage = availablePackages.length > 0 ? availablePackages[0] : null;
+            selectedPayment = paymentMethods[0];
+            userId = '';
+
+            document.getElementById('topupProductName').textContent = product.name;
+
+            const icon = document.getElementById('tpiIcon');
+            if (product.iconType === 'fa') {
+                icon.innerHTML = `<i class="fas ${product.icon}" style="color:${product.color};font-size:36px;"></i>`;
+            } else if (product.iconType === 'image') {
+                icon.innerHTML = `<img src="${product.icon}" alt="${product.name}" />`;
+            } else if (product.iconType === 'emoji') {
+                icon.innerHTML = `<span style="font-size:36px;">${product.icon}</span>`;
+            } else {
+                icon.innerHTML = `<i class="fas fa-gamepad" style="color:${product.color};font-size:36px;"></i>`;
+            }
+            icon.style.background = `${product.color}20`;
+            document.getElementById('tpiName').textContent = product.name;
+            document.getElementById('tpiPrice').textContent = `Harga mulai Rp ${product.price.toLocaleString()}`;
+
+            // Render packages
+            const pkgContainer = document.getElementById('topupPackages');
+            pkgContainer.innerHTML = '';
+            if (availablePackages.length > 0) {
+                availablePackages.forEach((pkg, idx) => {
+                    const div = document.createElement('div');
+                    div.className = `topup-package ${idx === 0 ? 'active' : ''}`;
+                    const badgeClass = pkg.badge || '';
+                    div.innerHTML = `
+                        <div class="pkg-price">Rp ${pkg.price.toLocaleString()}</div>
+                        <div class="pkg-label">${pkg.label}</div>
+                        ${badgeClass ? `<div class="pkg-badge ${badgeClass}">${badgeClass.toUpperCase()}</div>` : ''}
+                    `;
+                    div.addEventListener('click', function() {
+                        document.querySelectorAll('.topup-package').forEach(el => el.classList.remove('active'));
+                        this.classList.add('active');
+                        selectedPackage = pkg;
+                        updateSummary();
+                    });
+                    pkgContainer.appendChild(div);
+                });
+            } else {
+                pkgContainer.innerHTML =
+                    `<div style="grid-column:1/-1;text-align:center;padding:12px;color:var(--text-secondary);">Paket standar</div>`;
+                selectedPackage = { label: 'Standar', price: product.price };
+            }
+
+            // Render payments - PAKAI LOGO GAMBAR
+            const pmContainer = document.getElementById('topupPayments');
+            pmContainer.innerHTML = '';
+            paymentMethods.forEach((pm, idx) => {
+                const div = document.createElement('div');
+                div.className = `topup-payment ${idx === 0 ? 'active' : ''}`;
+                // Cek apakah icon berupa URL gambar
+                const isImageUrl = pm.icon && (pm.icon.startsWith('http') || pm.icon.startsWith('data:image'));
+                let iconHTML = '';
+                if (isImageUrl) {
+                    iconHTML = `<img src="${pm.icon}" alt="${pm.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas fa-credit-card\\' style=\\'color:${pm.color};font-size:22px;\\'></i>'" />`;
+                } else {
+                    iconHTML = `<i class="fas ${pm.icon}" style="color:${pm.color};font-size:22px;"></i>`;
+                }
+                div.innerHTML = `
+                    ${iconHTML}
+                    <span class="pm-name">${pm.name}</span>
+                `;
+                div.addEventListener('click', function() {
+                    document.querySelectorAll('.topup-payment').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedPayment = pm;
+                    updateSummary();
+                });
+                pmContainer.appendChild(div);
+            });
+
+            document.getElementById('topupUserId').value = '';
+            document.getElementById('topupFullscreen').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            updateSummary();
+
+            state.isProcessing = false;
+            const payBtn = document.getElementById('btnPayTopup');
+            payBtn.disabled = false;
+            payBtn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
+        }
+
+        function closeTopup() {
+            document.getElementById('topupFullscreen').classList.remove('active');
+            document.body.style.overflow = '';
+            selectedProduct = null;
+            selectedPackage = null;
+            selectedPayment = null;
+            state.isProcessing = false;
+            const payBtn = document.getElementById('btnPayTopup');
+            payBtn.disabled = false;
+            payBtn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
+        }
+
+        function updateSummary() {
+            if (!selectedProduct) return;
+            const pkg = selectedPackage || { label: 'Standar', price: selectedProduct.price };
+            const pm = selectedPayment || paymentMethods[0];
+            const userIdValue = document.getElementById('topupUserId').value || '-';
+
+            document.getElementById('summaryProduct').textContent = selectedProduct.name;
+            document.getElementById('summaryPackage').textContent = pkg.label;
+            document.getElementById('summaryUserId').textContent = userIdValue;
+            document.getElementById('summaryPayment').textContent = pm.name;
+            document.getElementById('summaryTotal').textContent = `Rp ${pkg.price.toLocaleString()}`;
+        }
+
+        // ============================================================
+        //  SUCCESS FULLSCREEN - TETAP SAMA
+        // ============================================================
+        function showSuccess(productName, packageLabel, userIdVal, paymentName, total, time) {
+            document.getElementById('sProduct').textContent = productName;
+            document.getElementById('sPackage').textContent = packageLabel;
+            document.getElementById('sUserId').textContent = userIdVal;
+            document.getElementById('sPayment').textContent = paymentName;
+            document.getElementById('sTotal').textContent = `Rp ${total.toLocaleString()}`;
+            document.getElementById('sTime').textContent = time || new Date().toLocaleString('id-ID');
+            document.getElementById('successFullscreen').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSuccess() {
+            document.getElementById('successFullscreen').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ============================================================
+        //  AUTH FUNCTIONS - TETAP SAMA
+        // ============================================================
+        function openAuth() {
+            document.getElementById('authModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAuth() {
+            document.getElementById('authModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function openProfile() {
+            if (!currentUser) return;
+            document.getElementById('profileModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('profileOrders').textContent = state.history.length || 0;
+            document.getElementById('profileWishlist').textContent = state.wishlist.length || 0;
+            document.getElementById('profilePoints').textContent = Math.floor(state.history.length * 10) || 0;
+            document.getElementById('editName').value = currentUser.name || '';
+            document.getElementById('editEmail').value = currentUser.email || '';
+            document.getElementById('editPhone').value = currentUser.phone || '';
+            document.getElementById('editFields').classList.remove('active');
+            document.getElementById('editToggleBtn').innerHTML = '<i class="fas fa-edit"></i> Edit Profil';
+        }
+
+        function closeProfile() {
+            document.getElementById('profileModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ============================================================
+        //  EVENT LISTENERS - TETAP SAMA
+        // ============================================================
+
+        document.getElementById('closeTopup').addEventListener('click', closeTopup);
+        document.getElementById('btnCancelTopup').addEventListener('click', closeTopup);
+        document.getElementById('topupUserId').addEventListener('input', updateSummary);
+
+        document.getElementById('btnPayTopup').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            if (state.isProcessing) {
+                return;
+            }
+
+            if (!selectedProduct) {
+                showToast('⚠️ Error', 'Produk tidak ditemukan!', 'error');
+                return;
+            }
+
+            const userIdValue = document.getElementById('topupUserId').value.trim();
+            if (!userIdValue) {
+                showToast('⚠️ Error', 'Harap masukkan ID / Username terlebih dahulu!', 'warning');
+                return;
+            }
+
+            if (!selectedPayment) {
+                showToast('⚠️ Error', 'Pilih metode pembayaran!', 'warning');
+                return;
+            }
+
+            const pkg = selectedPackage || { label: 'Standar', price: selectedProduct.price };
+            const btn = this;
+
+            state.isProcessing = true;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+            showToast('⏳ Memproses...', `Sedang memproses pembayaran ${selectedProduct.name}`, 'info', 2000);
+
+            setTimeout(function() {
+                try {
+                    const total = pkg.price;
+                    const time = new Date().toLocaleString('id-ID');
+
+                    addToCart(selectedProduct.id, 1);
+                    addHistory(`${selectedProduct.name} - ${pkg.label} (ID: ${userIdValue})`, total, 'success');
+
+                    showSuccess(
+                        selectedProduct.name,
+                        pkg.label,
+                        userIdValue,
+                        selectedPayment.name,
+                        total,
+                        time
+                    );
+
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
+                    state.isProcessing = false;
+
+                    closeTopup();
+                    updateCartUI();
+                    renderProducts();
+                } catch (err) {
+                    console.error('Payment error:', err);
+                    showToast('❌ Error', 'Terjadi kesalahan saat pemrosesan!', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
+                    state.isProcessing = false;
+                }
+            }, 2000);
+        });
+
+        document.getElementById('btnSuccessClose').addEventListener('click', closeSuccess);
+        document.getElementById('successFullscreen').addEventListener('click', function(e) {
+            if (e.target === this) closeSuccess();
+        });
+
+        document.getElementById('loginBtn').addEventListener('click', openAuth);
+        document.getElementById('authClose').addEventListener('click', closeAuth);
+        document.getElementById('authModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAuth();
+        });
+
+        document.querySelectorAll('.auth-tabs button').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.auth-tabs button').forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                document.querySelectorAll('.auth-form').forEach(function(f) { f.classList.remove('active'); });
+                document.getElementById(this.dataset.tab + 'Form').classList.add('active');
+            });
+        });
+
+        document.getElementById('btnLogin').addEventListener('click', function() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            if (!email || !password) {
+                showToast('⚠️ Error', 'Harap isi semua field!', 'warning');
+                return;
+            }
+            const saved = localStorage.getItem('topupUser');
+            if (saved) {
+                try {
+                    const user = JSON.parse(saved);
+                    if (user.email === email && user.password === password) {
+                        currentUser = user;
+                        state.wishlist = user.wishlist || [];
+                        state.history = user.history || [];
+                        saveUser();
+                        updateUIForUser();
+                        closeAuth();
+                        renderProducts();
+                        updateCartUI();
+                        document.getElementById('wishlistCount').textContent = state.wishlist.length;
+                        showToast('✅ Login Berhasil!', `Selamat datang kembali, ${user.name}!`, 'success');
+                        return;
+                    }
+                } catch (e) {}
+            }
+            showToast('⚠️ Error', 'Email atau password salah!', 'error');
+        });
+
+        document.getElementById('btnRegister').addEventListener('click', function() {
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            if (!name || !email || !password || !phone) {
+                showToast('⚠️ Error', 'Harap isi semua field!', 'warning');
+                return;
+            }
+            currentUser = {
+                name,
+                email,
+                password,
+                phone,
+                avatar: null,
+                isPremium: false,
+                wishlist: [],
+                history: [],
+                joined: new Date().toISOString()
+            };
+            state.wishlist = [];
+            state.history = [];
+            saveUser();
+            updateUIForUser();
+            closeAuth();
+            renderProducts();
+            updateCartUI();
+            document.getElementById('wishlistCount').textContent = 0;
+            showToast('✅ Registrasi Berhasil!', `Selamat datang, ${name}!`, 'success');
+        });
+
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') document.getElementById('btnLogin').click();
+        });
+        document.getElementById('regPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') document.getElementById('btnRegister').click();
+        });
+
+        document.getElementById('profileBtn').addEventListener('click', openProfile);
+        document.getElementById('profileClose').addEventListener('click', closeProfile);
+        document.getElementById('profileModal').addEventListener('click', function(e) {
+            if (e.target === this) closeProfile();
+        });
+
+        document.getElementById('btnLogout').addEventListener('click', logoutUser);
+
+        document.getElementById('editToggleBtn').addEventListener('click', function() {
+            const fields = document.getElementById('editFields');
+            fields.classList.toggle('active');
+            this.innerHTML = fields.classList.contains('active') ?
+                '<i class="fas fa-times"></i> Tutup Edit' :
+                '<i class="fas fa-edit"></i> Edit Profil';
+            if (currentUser) {
+                document.getElementById('editName').value = currentUser.name || '';
+                document.getElementById('editEmail').value = currentUser.email || '';
+                document.getElementById('editPhone').value = currentUser.phone || '';
+            }
+        });
+
+        document.getElementById('btnSaveProfile').addEventListener('click', function() {
+            if (!currentUser) return;
+            const name = document.getElementById('editName').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            if (!name || !email || !phone) {
+                showToast('⚠️ Error', 'Semua field harus diisi!', 'warning');
+                return;
+            }
+            currentUser.name = name;
+            currentUser.email = email;
+            currentUser.phone = phone;
+            saveUser();
+            updateUIForUser();
+            showToast('✅ Berhasil!', 'Profil berhasil diperbarui!', 'success');
+            document.getElementById('editFields').classList.remove('active');
+            document.getElementById('editToggleBtn').innerHTML = '<i class="fas fa-edit"></i> Edit Profil';
+        });
+
+        document.getElementById('profileAvatar').addEventListener('click', function() {
+            document.getElementById('avatarInput').click();
+        });
+
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const dataUrl = event.target.result;
+                if (currentUser) {
+                    currentUser.avatar = dataUrl;
+                    saveUser();
+                    updateUIForUser();
+                    showToast('✅ Berhasil!', 'Foto profil berhasil diupdate', 'success');
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('btnUpgradePremium').addEventListener('click', function() {
+            if (!currentUser) {
+                showToast('⚠️ Error', 'Harap login terlebih dahulu!', 'warning');
+                return;
+            }
+            if (currentUser.isPremium) {
+                showToast('Info', 'Anda sudah menjadi Premium Member!', 'info');
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+            setTimeout(function() {
+                currentUser.isPremium = true;
+                saveUser();
+                updateUIForUser();
+                showToast('⭐ Premium!', 'Selamat! Anda sekarang adalah Premium Member!', 'success');
+                btn.disabled = false;
+                btn.innerHTML = '✅ Sudah Premium';
+                renderProducts();
+            }, 2000);
+        });
+
+        document.getElementById('filterContainer').addEventListener('click', function(e) {
+            const btn = e.target.closest('.filter-btn');
+            if (!btn) return;
+            document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            state.currentFilter = btn.dataset.filter;
+            renderProducts();
+        });
+
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            state.searchQuery = e.target.value;
+            renderProducts();
+        });
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            state.searchQuery = document.getElementById('searchInput').value;
+            renderProducts();
+        });
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                state.searchQuery = document.getElementById('searchInput').value;
+                renderProducts();
+            }
+        });
+
+        let darkMode = true;
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            darkMode = !darkMode;
+            document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+            this.innerHTML = darkMode ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+            localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+        });
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            darkMode = savedTheme === 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('themeToggle').innerHTML = darkMode ? '<i class="fas fa-moon"></i>' :
+                '<i class="fas fa-sun"></i>';
+        }
+
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('topupFullscreen').classList.contains('active')) closeTopup();
+                if (document.getElementById('successFullscreen').classList.contains('active')) closeSuccess();
+                if (document.getElementById('authModal').classList.contains('active')) closeAuth();
+                if (document.getElementById('profileModal').classList.contains('active')) closeProfile();
+            }
+        });
+
+        document.getElementById('cartBtn').addEventListener('click', function() {
+            const count = getCartCount();
+            if (count === 0) {
+                showToast('Keranjang Kosong', 'Belum ada produk di keranjang', 'info');
+                return;
+            }
+            showToast('🛒 Keranjang', `${count} produk di keranjang. Lanjutkan checkout!`, 'success');
+        });
+
+        document.getElementById('wishlistBtn').addEventListener('click', function() {
+            const count = state.wishlist.length;
+            if (count === 0) {
+                showToast('Wishlist Kosong', 'Belum ada produk di wishlist', 'info');
+                return;
+            }
+            showToast('❤️ Wishlist', `${count} produk di wishlist`, 'success');
+        });
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        const userLoaded = loadUser();
+        if (!userLoaded) {
+            const savedGuest = localStorage.getItem('topupGuest');
+            if (savedGuest) {
+                try {
+                    const guest = JSON.parse(savedGuest);
+                    state.wishlist = guest.wishlist || [];
+                    state.history = guest.history || [];
+                    state.cart = guest.cart || [];
+                } catch (e) {}
+            }
+        } else {
+            state.wishlist = currentUser.wishlist || [];
+            state.history = currentUser.history || [];
+        }
+
+        renderProducts();
+        updateCartUI();
+        document.getElementById('wishlistCount').textContent = state.wishlist.length;
+        updateUIForUser();
+
+        window.addEventListener('beforeunload', function() {
+            if (!currentUser) {
+                localStorage.setItem('topupGuest', JSON.stringify({
+                    wishlist: state.wishlist,
+                    history: state.history,
+                    cart: state.cart
+                }));
+            }
+        });
+
+        console.log('🚀 TopUpPro siap digunakan!');
+        console.log('📦 Total produk: ' + productsData.length + ' produk');
+        console.log('📦 Total pilihan paket: 300+ paket');
+        console.log('💳 Payment methods pakai logo asli (URL gambar)');
+        console.log('✅ Ganti URL gambar payment di array paymentMethods');
+    </script>
+
+</body>
+</html>
